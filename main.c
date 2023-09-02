@@ -231,25 +231,51 @@ char *fread_all(FILE *fp)
   return buffer.data;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-  const char *filepath = "./input.txt";
-  FILE *handle         = fopen(filepath, "r");
-  char *file_data      = fread_all(handle);
-  fclose(handle);
-  buffer_t *buffer   = buffer_init_str(filepath, file_data, strlen(file_data));
-  struct PResult res = parse_input(buffer);
-  if (res.nodes == NULL)
+  if (argc == 1)
   {
-    fputs("Exiting early...\n", stderr);
-    goto error;
+    fprintf(
+        stderr,
+        "Usage: %s [FILE]...\nReads FILES sequentially on the same machine\n",
+        argv[0]);
+    return 1;
   }
-  char *str = ast_to_str(res.nodes, res.size);
 
-  free(str);
-  free(res.nodes);
-  free(buffer);
-  free(file_data);
+  char *filepath, *file_data;
+  buffer_t *buffer;
+  struct PResult res;
+
+  for (int i = 1; i < argc; ++i)
+  {
+    filepath = argv[i];
+
+    FILE *handle = fopen(filepath, "r");
+    if (!handle)
+    {
+      fprintf(stderr, "ERROR: Could not open \"%s\"\n", filepath);
+      goto error;
+    }
+    file_data = fread_all(handle);
+    fclose(handle);
+
+    buffer = buffer_init_str(filepath, file_data, strlen(file_data));
+    res    = parse_input(buffer);
+    if (res.nodes == NULL)
+    {
+      fputs("Exiting early...\n", stderr);
+      goto error;
+    }
+
+    char *str = ast_to_str(res.nodes, res.size);
+
+    printf("%s=>%s\n", filepath, str);
+
+    free(str);
+    free(res.nodes);
+    free(buffer);
+    free(file_data);
+  }
   return 0;
 error:
   if (buffer)
