@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wpedantic -ggdb -fsanitize=address -std=c11
 LIBS=
-OBJECTS=lib.o main.o
+OBJECTS=lib.o parser.o main.o
 OUT=obf.out
 ARGS=
 
