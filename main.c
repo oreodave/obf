@@ -203,22 +203,58 @@ char *ast_to_str(node_t *ast, size_t size)
   return out;
 }
 
+#define MAX(a, b) (a > b ? a : b)
+
+char *fread_all(FILE *fp)
+{
+  const size_t CHUNK_SIZE = 1024, MULT = 2;
+  struct
+  {
+    char *data;
+    size_t used, available;
+  } buffer = {calloc(CHUNK_SIZE, sizeof(*buffer.data)), 0, CHUNK_SIZE};
+
+  size_t acc = 0, bytes_read = 0;
+  while ((bytes_read = fread(buffer.data + acc, sizeof(*buffer.data),
+                             CHUNK_SIZE, fp)) != 0)
+  {
+    buffer.used += bytes_read;
+    acc += bytes_read;
+    if (buffer.used + CHUNK_SIZE >= buffer.available)
+    {
+      buffer.available = MAX(buffer.available * MULT, buffer.used + CHUNK_SIZE);
+      buffer.data      = realloc(buffer.data, buffer.available);
+    }
+  }
+  buffer.data              = realloc(buffer.data, buffer.used + 1);
+  buffer.data[buffer.used] = '\0';
+  return buffer.data;
+}
+
 int main(void)
 {
-  const char input[] = "[->+<]]";
-  buffer_t *buffer =
-      buffer_init_str("*internal*", input, sizeof(input) / sizeof(input[0]));
+  const char *filepath = "./input.txt";
+  FILE *handle         = fopen(filepath, "r");
+  char *file_data      = fread_all(handle);
+  fclose(handle);
+  buffer_t *buffer   = buffer_init_str(filepath, file_data, strlen(file_data));
   struct PResult res = parse_input(buffer);
   if (res.nodes == NULL)
   {
     fputs("Exiting early...\n", stderr);
-    free(buffer);
-    return 1;
+    goto error;
   }
   char *str = ast_to_str(res.nodes, res.size);
 
   free(str);
   free(res.nodes);
   free(buffer);
+  free(file_data);
   return 0;
+error:
+  if (buffer)
+    free(buffer);
+  if (res.nodes)
+    free(res.nodes);
+  return 1;
 }
