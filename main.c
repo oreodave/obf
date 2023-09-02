@@ -15,10 +15,17 @@
 
 #define MEMORY_DEFAULT 30000
 
+#define DEBUG        0
+#define MIN_MEM_DUMP 64
+
 typedef struct
 {
   size_t dp;
   uint8_t memory[MEMORY_DEFAULT];
+
+#if DEBUG
+  size_t dp_max;
+#endif
 } machine_t;
 
 void interpret(machine_t *cpu, node_t *ast, size_t num)
@@ -55,7 +62,16 @@ void interpret(machine_t *cpu, node_t *ast, size_t num)
         i = node.loop_ref;
       break;
     }
+#if DEBUG
+    if (cpu->dp > cpu->dp_max)
+      cpu->dp_max = cpu->dp + 1;
+#endif
   }
+
+#if DEBUG
+  if (cpu->dp_max < MIN_MEM_DUMP)
+    cpu->dp_max = MIN_MEM_DUMP;
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -80,6 +96,9 @@ int main(int argc, char *argv[])
     filepath = argv[i];
 
     FILE *handle = fopen(filepath, "r");
+#if DEBUG
+    printf("[DEBUG]: Attempting to open file handle to %s\n", filepath);
+#endif
     if (!handle)
     {
       fprintf(stderr, "ERROR: Could not open \"%s\"\n", filepath);
@@ -87,22 +106,40 @@ int main(int argc, char *argv[])
     }
     file_data = fread_all(handle);
     fclose(handle);
+#if DEBUG
+    printf("[DEBUG]: Read data from file %s\n", filepath);
+#endif
 
     buffer = buffer_init_str(filepath, file_data, strlen(file_data));
-    res    = parse_buffer(buffer);
+#if DEBUG
+    puts("[DEBUG]: Initialised buffer");
+#endif
+    res = parse_buffer(buffer);
     if (res.nodes == NULL)
     {
       fputs("Exiting early...\n", stderr);
       goto error;
     }
 
+#if DEBUG
     char *str = ast_to_str(res.nodes, res.size);
-
-    printf("%s=>%s\n", filepath, str);
+    printf("[DEBUG]: Parsed buffer (%lu nodes parsed)\n\t[DEBUG]: Out=%s\n",
+           res.size, str);
+    free(str);
+#endif
 
     interpret(&machine, res.nodes, res.size);
 
-    free(str);
+#if DEBUG
+    printf("[DEBUG]: Finished interpreting, memory:");
+    for (size_t i = 0; i < machine.dp_max; ++i)
+    {
+      if (i % 8 == 0)
+        printf("\n\t");
+      printf("%d    ", machine.memory[i]);
+    }
+#endif
+
     free(res.nodes);
     free(buffer);
     free(file_data);
