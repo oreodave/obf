@@ -41,37 +41,60 @@ typedef struct AST
   int loop_ref;
 } node_t;
 
+typedef struct Buffer
+{
+  const char *name;
+  size_t size;
+  char data[];
+} buffer_t;
+
+buffer_t *buffer_init_str(const char *name, const char *str, size_t str_size)
+{
+  buffer_t *buf = malloc(sizeof(*buf) + str_size + 1);
+  buf->name     = name;
+  buf->size     = str_size;
+  memcpy(buf->data, str, str_size);
+  buf->data[str_size] = '\0';
+  return buf;
+}
+
+void print_error(const char *handle, size_t row, size_t column,
+                 const char *reason)
+{
+  fprintf(stderr, "%s:%lu:%lu:%s\n", handle, row, column, reason);
+}
+
 struct PResult
 {
   node_t *nodes;
   size_t size;
-} parse_input(const char *input, size_t input_size)
+} parse_input(buffer_t *buffer)
 {
   node_t *nodes = NULL;
   size_t usable = 0, loops = 0;
-  for (size_t i = 0; i < input_size; ++i)
-    if (usable_character(input[i]))
+  for (size_t i = 0; i < buffer->size; ++i)
+    if (usable_character(buffer->data[i]))
     {
       ++usable;
-      if (input[i] == '[')
+      if (buffer->data[i] == '[')
         ++loops;
     }
   nodes = calloc(usable, sizeof(*nodes));
 
   // First pass: Get my info
-  for (size_t i = 0, col = 0, row = 1, nptr = 0; i < input_size; ++i)
+  for (size_t i = 0, col = 0, row = 1, nptr = 0; i < buffer->size; ++i)
   {
     ++col;
-    if (input[i] == '\n')
+    if (buffer->data[i] == '\n')
     {
       ++row;
       col = 0;
     }
-    else if (usable_character(input[i]))
+    else if (usable_character(buffer->data[i]))
     {
       nodes[nptr].col = col;
       nodes[nptr].row = row;
-      switch (input[i])
+      switch (buffer->data[i])
       {
       case '>':
         nodes[nptr].type = NEXT;
@@ -117,7 +140,8 @@ struct PResult
     {
       if (stackptr == 0)
       {
-        fputs("ERROR: Unbalanced square brackets!\n", stderr);
+        print_error(buffer->name, node->row, node->col,
+                    "ERROR: Unbalanced square brackets!");
         goto error;
       }
       // Access last IN loop
@@ -129,7 +153,9 @@ struct PResult
 
   if (stackptr > 0)
   {
-    fputs("ERROR: Unbalanced square brackets!\n", stderr);
+    node_t *node = nodes + usable - 1;
+    print_error(buffer->name, node->row, node->col,
+                "ERROR: Unbalanced square brackets!");
     goto error;
   }
 
@@ -179,15 +205,20 @@ char *ast_to_str(node_t *ast, size_t size)
 
 int main(void)
 {
-  const char input[] = "[[->+<]";
-  struct PResult res = parse_input(input, sizeof(input) / sizeof(input[0]));
+  const char input[] = "[->+<]]";
+  buffer_t *buffer =
+      buffer_init_str("*internal*", input, sizeof(input) / sizeof(input[0]));
+  struct PResult res = parse_input(buffer);
   if (res.nodes == NULL)
   {
     fputs("Exiting early...\n", stderr);
+    free(buffer);
     return 1;
   }
   char *str = ast_to_str(res.nodes, res.size);
+
   free(str);
   free(res.nodes);
+  free(buffer);
   return 0;
 }
