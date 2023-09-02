@@ -21,6 +21,43 @@ typedef struct
   uint8_t memory[MEMORY_DEFAULT];
 } machine_t;
 
+void interpret(machine_t *cpu, node_t *ast, size_t num)
+{
+  for (size_t i = 0; i < num; ++i)
+  {
+    node_t node = ast[i];
+    switch (node.type)
+    {
+    case NEXT:
+      ++cpu->dp;
+      break;
+    case PREV:
+      --cpu->dp;
+      break;
+    case INC:
+      ++cpu->memory[cpu->dp];
+      break;
+    case DEC:
+      --cpu->memory[cpu->dp];
+      break;
+    case OUT:
+      putchar(cpu->memory[cpu->dp]);
+      break;
+    case READ:
+      cpu->memory[cpu->dp] = getchar();
+      break;
+    case LIN:
+      if (cpu->memory[cpu->dp] == 0)
+        i = node.loop_ref;
+      break;
+    case LOUT:
+      if (cpu->memory[cpu->dp] != 0)
+        i = node.loop_ref;
+      break;
+    }
+  }
+}
+
 int main(int argc, char *argv[])
 {
   if (argc == 1)
@@ -35,6 +72,8 @@ int main(int argc, char *argv[])
   char *filepath, *file_data;
   buffer_t *buffer;
   struct PResult res;
+
+  machine_t machine = {0};
 
   for (int i = 1; i < argc; ++i)
   {
@@ -60,6 +99,8 @@ int main(int argc, char *argv[])
     char *str = ast_to_str(res.nodes, res.size);
 
     printf("%s=>%s\n", filepath, str);
+
+    interpret(&machine, res.nodes, res.size);
 
     free(str);
     free(res.nodes);
