@@ -1,20 +1,28 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Wpedantic -ggdb -fsanitize=address -std=c11
-LIBS=
-OBJECTS=lib.o parser.o main.o
 OUT=obf.out
+LIBS=
 ARGS=
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $@ $(LIBS)
+RELEASE=0
+GFLAGS=-Wall -Wextra -Werror -Wswitch-enum -std=c11
+DFLAGS=-ggdb -fsanitize=address -fsanitize=undefined -DDEBUG
+RFLAGS=-O3
+ifeq ($(RELEASE), 1)
+CFLAGS=$(GFLAGS) $(RFLAGS)
+else
+CFLAGS=$(GFLAGS) $(DFLAGS)
+endif
 
-$(OUT): $(OBJECTS)
+.PHONY: all
+all: $(OUT)
+
+$(OUT): lib.c parser.c main.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
-
-.PHONY:
-clean:
-	rm -rfv $(OUT) $(OBJECTS)
 
 .PHONY: run
 run: $(OUT)
 	./$^ $(ARGS)
+
+.PHONY:
+clean:
+	rm -v $(OUT)
