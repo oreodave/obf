@@ -120,12 +120,15 @@ void asm_translate_nodes(buffer_t **asm_buffer, struct PResult nodes,
                          const char *src_name)
 {
   // First pass: Setup the ASM label array
-  struct Label labels[nodes.labels * 2];
-  u64 label_ptr = 0;
-  for (size_t i = 0; i < nodes.size; ++i)
-    if (nodes.nodes[i].type == LIN || nodes.nodes[i].type == LOUT)
-      labels[label_ptr++] =
-          (struct Label){.cur = i, .next = nodes.nodes[i].loop_ref};
+  struct Label labels[nodes.labels ? nodes.labels * 2 : 1];
+  if (nodes.labels)
+  {
+    u64 label_ptr = 0;
+    for (size_t i = 0; i < nodes.size; ++i)
+      if (nodes.nodes[i].type == LIN || nodes.nodes[i].type == LOUT)
+        labels[label_ptr++] =
+            (struct Label){.cur = i, .next = nodes.nodes[i].loop_ref};
+  }
 
   // Second pass: Translating to assembly
   for (size_t i = 0; i < nodes.size; ++i)

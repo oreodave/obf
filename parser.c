@@ -121,26 +121,29 @@ struct PResult parse_buffer(buffer_t *buffer)
   }
 
   // Third pass: setup loop references
-  node_t *stack[loops];
-  memset(stack, 0, loops);
   size_t stackptr = 0;
-  for (size_t i = 0; i < usable; ++i)
+  if (loops)
   {
-    node_t *node = nodes + i;
-    if (node->type == LIN)
-      stack[stackptr++] = node;
-    else if (node->type == LOUT)
+    node_t *stack[loops];
+    memset(stack, 0, loops);
+    for (size_t i = 0; i < usable; ++i)
     {
-      if (stackptr == 0)
+      node_t *node = nodes + i;
+      if (node->type == LIN)
+        stack[stackptr++] = node;
+      else if (node->type == LOUT)
       {
-        print_error(buffer->name, node->row, node->col,
-                    "ERROR: Unbalanced square brackets!");
-        goto error;
+        if (stackptr == 0)
+        {
+          print_error(buffer->name, node->row, node->col,
+                      "ERROR: Unbalanced square brackets!");
+          goto error;
+        }
+        // Access last IN loop
+        --stackptr;
+        node->loop_ref            = stack[stackptr] - nodes;
+        stack[stackptr]->loop_ref = i;
       }
-      // Access last IN loop
-      --stackptr;
-      node->loop_ref            = stack[stackptr] - nodes;
-      stack[stackptr]->loop_ref = i;
     }
   }
 
