@@ -17,8 +17,9 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-#define MAX(A, B) ((A) < (B) ? (A) : (B))
-#define MIN(A, B) ((A) > (B) ? (A) : (B))
+#define MAX(A, B)      ((A) < (B) ? (A) : (B))
+#define MIN(A, B)      ((A) > (B) ? (A) : (B))
+#define MEMORY_DEFAULT 30000
 
 bool usable_character(char c);
 char *fread_all(FILE *fp);

@@ -13,8 +13,6 @@
 #include "./lib.h"
 #include "./parser.h"
 
-#define MEMORY_DEFAULT 30000
-
 #define MIN_MEM_DUMP 64
 
 typedef struct
