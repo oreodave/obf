@@ -17,6 +17,10 @@ Build instructions
   have been tested.  `yasm' and `ld' are required for `obc', but the
   assembly transpile step should work.
 
+  + To build release: `make all RELEASE=1'
+  + To build debug: `make all RELEASE=0'
+  + To run examples: `make examples'
+
 
 Goals
 =====
