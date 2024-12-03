@@ -28,9 +28,13 @@ void print_error(const char *handle, size_t row, size_t column,
 typedef struct Buffer
 {
   const char *name;
-  size_t size;
-  char data[];
+  u64 size, capacity;
+  u8 data[];
 } buffer_t;
 
 buffer_t *buffer_init_str(const char *name, const char *str, size_t str_size);
+bool buffer_ensure(buffer_t **buffer, u64 expected);
+bool buffer_ensure_relative(buffer_t **buffer, u64 expected);
+bool buffer_append(buffer_t **buffer, u8 datum);
+bool buffer_append_bytes(buffer_t **buffer, u8 *data, u64 size);
 #endif

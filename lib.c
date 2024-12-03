@@ -13,9 +13,54 @@ buffer_t *buffer_init_str(const char *name, const char *str, size_t str_size)
   buffer_t *buf = malloc(sizeof(*buf) + str_size + 1);
   buf->name     = name;
   buf->size     = str_size;
-  memcpy(buf->data, str, str_size);
-  buf->data[str_size] = '\0';
+  buf->capacity = str_size;
+  if (str)
+  {
+    memcpy(buf->data, str, str_size);
+    buf->data[str_size] = '\0';
+  }
   return buf;
+}
+
+bool buffer_ensure(buffer_t **buffer, u64 expected)
+{
+  if (!buffer)
+    return false;
+  else if (!*buffer)
+  {
+    *buffer = buffer_init_str(NULL, NULL, expected);
+  }
+  else if (buffer[0]->capacity <= expected)
+  {
+    buffer[0]->capacity = MAX(buffer[0]->capacity * 2, expected);
+    *buffer = realloc(*buffer, sizeof(**buffer) + buffer[0]->capacity);
+  }
+  return true;
+}
+
+bool buffer_ensure_relative(buffer_t **buffer, u64 expected)
+{
+  return buffer_ensure(buffer,
+                       buffer && *buffer ? buffer[0]->size + expected : 0);
+}
+
+bool buffer_append(buffer_t **buffer, u8 datum)
+{
+  bool ret = buffer_ensure_relative(buffer, 1);
+  if (ret)
+    buffer[0]->data[buffer[0]->size++] = datum;
+  return ret;
+}
+
+bool buffer_append_bytes(buffer_t **buffer, u8 *data, u64 size)
+{
+  bool ret = buffer_ensure_relative(buffer, size);
+  if (ret)
+  {
+    memcpy(buffer[0]->data + buffer[0]->size, data, size);
+    buffer[0]->size += size;
+  }
+  return ret;
 }
 
 void print_error(const char *handle, size_t row, size_t column,
