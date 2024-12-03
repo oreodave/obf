@@ -55,7 +55,7 @@ char *ast_to_str(node_t *ast, size_t size)
 struct PResult parse_buffer(buffer_t *buffer)
 {
   node_t *nodes = NULL;
-  size_t usable = 0, loops = 0;
+  size_t usable = 0, loops = 0, loop_ends = 0;
 
   // First pass: Compute |nodes|
   for (size_t i = 0; i < buffer->size; ++i)
@@ -64,7 +64,44 @@ struct PResult parse_buffer(buffer_t *buffer)
       ++usable;
       if (buffer->data[i] == '[')
         ++loops;
+      else if (buffer->data[i] == ']')
+        ++loop_ends;
     }
+  if (loops != loop_ends)
+  {
+    // Look for the point of failure
+    i64 stack = 0;
+    for (size_t i = 0, col = 0, row = 0; i < buffer->size; ++i)
+    {
+      if (buffer->data[i] == '\n')
+      {
+        col = 0;
+        ++row;
+        continue;
+      }
+      else if (buffer->data[i] != ']' && buffer->data[i] != '[')
+      {
+        ++col;
+        continue;
+      }
+      else if (buffer->data[i] == ']')
+      {
+        --stack;
+      }
+      else if (buffer->data[i] == '[')
+      {
+        ++stack;
+      }
+      ++col;
+
+      if (stack < 0)
+      {
+        print_error(buffer->name, row, col,
+                    "ERROR: Unbalanced square brackets!");
+        goto error;
+      }
+    }
+  }
   nodes = calloc(usable, sizeof(*nodes));
   if (!nodes)
   {
@@ -133,12 +170,6 @@ struct PResult parse_buffer(buffer_t *buffer)
         stack[stackptr++] = node;
       else if (node->type == LOUT)
       {
-        if (stackptr == 0)
-        {
-          print_error(buffer->name, node->row, node->col,
-                      "ERROR: Unbalanced square brackets!");
-          goto error;
-        }
         // Access last IN loop
         --stackptr;
         node->loop_ref            = stack[stackptr] - nodes;
