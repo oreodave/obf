@@ -3,7 +3,7 @@
 
 #include "./lib.h"
 
-typedef struct AST
+typedef struct
 {
   size_t col, row;
   enum

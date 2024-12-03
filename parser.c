@@ -11,6 +11,13 @@
 char *ast_to_str(node_t *ast, size_t size)
 {
   char *out = calloc(size + 1, 1);
+  if (!out)
+  {
+    print_error(
+        "[internal]", 0, 0,
+        "ERROR: Out of Memory (could not allocate buffer in ast_to_str)");
+    return NULL;
+  }
   for (size_t i = 0; i < size; ++i)
   {
     switch (ast[i].type)
@@ -49,6 +56,8 @@ struct PResult parse_buffer(buffer_t *buffer)
 {
   node_t *nodes = NULL;
   size_t usable = 0, loops = 0;
+
+  // First pass: Compute |nodes|
   for (size_t i = 0; i < buffer->size; ++i)
     if (usable_character(buffer->data[i]))
     {
@@ -57,8 +66,15 @@ struct PResult parse_buffer(buffer_t *buffer)
         ++loops;
     }
   nodes = calloc(usable, sizeof(*nodes));
+  if (!nodes)
+  {
+    print_error(
+        "[internal]", 0, 0,
+        "ERROR: Out of Memory (could not allocate buffer in parse_buffer)");
+    return (struct PResult){0};
+  }
 
-  // First pass: Get my info
+  // Second pass: parse nodes
   for (size_t i = 0, col = 0, row = 1, nptr = 0; i < buffer->size; ++i)
   {
     ++col;
@@ -104,7 +120,7 @@ struct PResult parse_buffer(buffer_t *buffer)
     }
   }
 
-  // Second pass: setup any loop references
+  // Third pass: setup loop references
   node_t *stack[loops];
   memset(stack, 0, loops);
   size_t stackptr = 0;

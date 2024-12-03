@@ -74,14 +74,19 @@ void interpret(machine_t *cpu, node_t *ast, size_t num)
 #endif
 }
 
+void usage(const char *name, FILE *fp)
+{
+  fprintf(fp,
+          "Usage: %s [FILE]...\n\tExecutes FILES sequentially on the "
+          "same machine\n",
+          name);
+}
+
 int main(int argc, char *argv[])
 {
   if (argc == 1)
   {
-    fprintf(
-        stderr,
-        "Usage: %s [FILE]...\nReads FILES sequentially on the same machine\n",
-        argv[0]);
+    usage(argv[0], stderr);
     return 1;
   }
 

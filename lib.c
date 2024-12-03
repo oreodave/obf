@@ -33,6 +33,14 @@ char *fread_all(FILE *fp)
     size_t used, available;
   } buffer = {calloc(CHUNK_SIZE, sizeof(*buffer.data)), 0, CHUNK_SIZE};
 
+  if (!buffer.data)
+  {
+    print_error(
+        "[internal]", 0, 0,
+        "ERROR: Out of Memory (could not allocate buffer in fread_all)");
+    return NULL;
+  }
+
   size_t acc = 0, bytes_read = 0;
   while ((bytes_read = fread(buffer.data + acc, sizeof(*buffer.data),
                              CHUNK_SIZE, fp)) != 0)
