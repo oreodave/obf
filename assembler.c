@@ -119,6 +119,7 @@ void ast_ref_to_asm_label(u64, struct Label *, u64, i64 *, i64 *);
 void asm_translate_nodes(buffer_t **asm_buffer, struct PResult nodes,
                          const char *src_name)
 {
+  asm_write_init(asm_buffer);
   // First pass: Setup the ASM label array
   struct Label labels[nodes.labels ? nodes.labels * 2 : 1];
   if (nodes.labels)
@@ -184,6 +185,7 @@ void asm_translate_nodes(buffer_t **asm_buffer, struct PResult nodes,
                           table[node.type].len);
     }
   }
+  asm_write_exit(asm_buffer);
 }
 
 /* Implementations for throwaway functions */
