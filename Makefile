@@ -28,4 +28,4 @@ run: $(OUT)
 
 .PHONY:
 clean:
-	rm -v *.out *.o
+	rm -v *.out *.o *.asm
