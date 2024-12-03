@@ -74,8 +74,8 @@ void interpret(machine_t *cpu, node_t *ast, size_t num)
 void usage(const char *name, FILE *fp)
 {
   fprintf(fp,
-          "Usage: %s [FILE]...\n\tExecutes FILES sequentially on the "
-          "same machine\n",
+          "Usage: %s [FILE]...\n\tInterprets FILE as a brainfuck program"
+          "\n",
           name);
 }
 
@@ -87,70 +87,65 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  char *filepath = NULL, *file_data = NULL;
+  int ret        = 0;
+  char *filepath = argv[1], *file_data = NULL;
   buffer_t *buffer   = NULL;
   struct PResult res = {0};
+  machine_t machine  = {0};
 
-  machine_t machine = {0};
-
-  for (int i = 1; i < argc; ++i)
+  FILE *handle = fopen(filepath, "r");
+#ifdef DEBUG
+  printf("[DEBUG]: Attempting to open file handle to %s\n", filepath);
+#endif
+  if (!handle)
   {
-    filepath = argv[i];
-
-    FILE *handle = fopen(filepath, "r");
-#ifdef DEBUG
-    printf("[DEBUG]: Attempting to open file handle to %s\n", filepath);
-#endif
-    if (!handle)
-    {
-      fprintf(stderr, "ERROR: Could not open \"%s\"\n", filepath);
-      goto error;
-    }
-    file_data = fread_all(handle);
-    fclose(handle);
-#ifdef DEBUG
-    printf("[DEBUG]: Read data from file %s\n", filepath);
-#endif
-
-    buffer = buffer_init_str(filepath, file_data, strlen(file_data));
-#ifdef DEBUG
-    puts("[DEBUG]: Initialised buffer");
-#endif
-    res = parse_buffer(buffer);
-    if (res.nodes == NULL)
-    {
-      fputs("Exiting early...\n", stderr);
-      goto error;
-    }
-
-#ifdef DEBUG
-    char *str = ast_to_str(res.nodes, res.size);
-    printf("[DEBUG]: Parsed buffer (%lu nodes parsed)\n\t[DEBUG]: Out=%s\n",
-           res.size, str);
-    free(str);
-#endif
-
-    interpret(&machine, res.nodes, res.size);
-
-#ifdef DEBUG
-    printf("[DEBUG]: Finished interpreting, memory:");
-    for (size_t i = 0; i < machine.dp_max; ++i)
-    {
-      if (i % 8 == 0)
-        printf("\n\t");
-      printf("%d    ", machine.memory[i]);
-    }
-#endif
-
-    free(res.nodes);
-    free(buffer);
-    free(file_data);
+    fprintf(stderr, "ERROR: Could not open \"%s\"\n", filepath);
+    ret = 1;
+    goto end;
   }
-  return 0;
-error:
-  if (buffer)
-    free(buffer);
+  file_data = fread_all(handle);
+  fclose(handle);
+#ifdef DEBUG
+  printf("[DEBUG]: Read data from file %s\n", filepath);
+#endif
+
+  buffer = buffer_init_str(filepath, file_data, strlen(file_data));
+#ifdef DEBUG
+  puts("[DEBUG]: Initialised buffer");
+#endif
+  res = parse_buffer(buffer);
+  if (res.nodes == NULL)
+  {
+    fputs("Exiting early...\n", stderr);
+    ret = 1;
+    goto end;
+  }
+
+#ifdef DEBUG
+  char *str = ast_to_str(res.nodes, res.size);
+  printf("[DEBUG]: Parsed buffer (%lu nodes parsed)\n\t[DEBUG]: Out=%s\n",
+         res.size, str);
+  free(str);
+#endif
+
+  interpret(&machine, res.nodes, res.size);
+
+#ifdef DEBUG
+  printf("[DEBUG]: Finished interpreting, memory:");
+  for (size_t i = 0; i < machine.dp_max; ++i)
+  {
+    if (i % 8 == 0)
+      printf("\n\t");
+    printf("%d    ", machine.memory[i]);
+  }
+  printf("\n");
+#endif
+end:
   if (res.nodes)
     free(res.nodes);
-  return 1;
+  if (buffer)
+    free(buffer);
+  if (file_data)
+    free(file_data);
+  return ret;
 }
