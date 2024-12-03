@@ -74,7 +74,7 @@ void interpret(machine_t *cpu, node_t *ast, size_t num)
 void usage(const char *name, FILE *fp)
 {
   fprintf(fp,
-          "Usage: %s [FILE]...\n\tInterprets FILE as a brainfuck program"
+          "Usage: %s FILE...\n\tInterprets FILE as a BrainFuck program"
           "\n",
           name);
 }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
   res = parse_buffer(buffer);
   if (res.nodes == NULL)
   {
-    fputs("Exiting early...\n", stderr);
+    fputs("[WARNING]: Empty source file.", stderr);
     ret = 1;
     goto end;
   }
