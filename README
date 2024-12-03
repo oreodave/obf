@@ -1,0 +1,17 @@
+                     ______________________________
+
+                      OREO'S BRAINFUCK INTERPRETER
+
+                            Aryadev Chavali
+                     ______________________________
+
+
+Here is a simple brainfuck compiler written in C.  Most of the code was
+written in 2023.
+
+
+Goals
+=====
+
+  + [X] Complete reference interpreter for brainfuck
+  + [ ] Native compiler
