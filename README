@@ -1,17 +1,38 @@
-                     ______________________________
+                      ___________________________
 
-                      OREO'S BRAINFUCK INTERPRETER
+                       OREO'S BRAINFUCK COMPILER
 
                             Aryadev Chavali
-                     ______________________________
+                      ___________________________
 
 
-Here is a simple brainfuck compiler written in C.  Most of the code was
-written in 2023.
+Here is a simple brainfuck compiler/interpreter written in C.  Most of
+the code was written in 2023, but the compiler code was written in 2024.
+
+
+Build instructions
+==================
+
+  A C compiler capable of compiling C11 is required.  `clang' and `gcc'
+  have been tested.  `yasm' and `ld' are required for `obc', but the
+  assembly transpile step should work.
 
 
 Goals
 =====
 
   + [X] Complete reference interpreter for brainfuck
-  + [ ] Native compiler
+  + [X] Native compiler
+
+
+Notes
+=====
+
+  I cheat heavily to make the native compiler here; I'm not writing my
+  own ELF executables by hand (using `elf.h').  Instead I write valid
+  assembly code in a string buffer, then compile that via `yasm' and
+  `ld'.
+
+  It shouldn't be all that difficult to make a JIT from this point; just
+  translating the assembly snippets into machine code and embedding that
+  into an executable page.
