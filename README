@@ -15,7 +15,7 @@ Build instructions
 
   A C compiler capable of compiling C11 is required.  `clang' and `gcc'
   have been tested.  `yasm' and `ld' are required for `obc', but the
-  assembly transpile step should work.
+  assembly transpile step should work without them.
 
   + To build release: `make all RELEASE=1'
   + To build debug: `make all RELEASE=0'
