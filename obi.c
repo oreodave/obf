@@ -1,7 +1,7 @@
-/* main.c
+/* obi.c
  * Created: 2023-09-02
  * Author: Aryadev Chavali
- * Description: Entrypoint of compiler
+ * Description: Entrypoint of interpreter
  */
 
 #include <stdbool.h>

@@ -1,5 +1,4 @@
 CC=gcc
-OUT=obf.out
 LIBS=
 ARGS=
 
@@ -14,15 +13,19 @@ CFLAGS=$(GFLAGS) $(DFLAGS)
 endif
 
 .PHONY: all
-all: $(OUT)
+all: obi.out obc.out
 
-$(OUT): lib.c parser.c main.c
+obi.out: lib.c parser.c obi.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
+obc.out: lib.c parser.c assembler.c obc.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+
+OUT=
 .PHONY: run
 run: $(OUT)
 	./$^ $(ARGS)
 
 .PHONY:
 clean:
-	rm -v $(OUT)
+	rm -v *.out *.o
