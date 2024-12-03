@@ -70,6 +70,10 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  char *file_data  = NULL;
+  buffer_t *buffer = NULL, *asm_buffer = NULL;
+  struct PResult res = {0};
+
   struct Config config = {0};
   int ret              = parse_config(&config, argc, argv);
   if (!ret)
@@ -78,10 +82,6 @@ int main(int argc, char *argv[])
     goto end;
   }
   ret = 0;
-
-  char *file_data  = NULL;
-  buffer_t *buffer = NULL, *asm_buffer = NULL;
-  struct PResult res = {0};
 
   FILE *handle = fopen(config.prog_name, "r");
   if (!handle)
