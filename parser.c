@@ -152,7 +152,7 @@ struct PResult parse_buffer(buffer_t *buffer)
     goto error;
   }
 
-  return (struct PResult){nodes, usable};
+  return (struct PResult){nodes, usable, loops};
 error:
   if (nodes)
     free(nodes);

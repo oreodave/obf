@@ -24,6 +24,7 @@ struct PResult
 {
   node_t *nodes;
   size_t size;
+  size_t labels;
 };
 
 char *ast_to_str(node_t *ast, size_t size);
