@@ -3,20 +3,22 @@
 
 #include "./lib.h"
 
+typedef enum
+{
+  NEXT = 0,
+  PREV,
+  INC,
+  DEC,
+  OUT,
+  READ,
+  LIN,
+  LOUT
+} node_type_t;
+
 typedef struct
 {
   size_t col, row;
-  enum
-  {
-    NEXT = 0,
-    PREV,
-    INC,
-    DEC,
-    OUT,
-    READ,
-    LIN,
-    LOUT
-  } type;
+  node_type_t type;
   int loop_ref;
 } node_t;
 
