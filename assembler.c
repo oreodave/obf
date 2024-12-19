@@ -17,22 +17,22 @@ struct Label
 /* First, the functions to call external utilities (badly written, I know). They
  * presume a filled asm_buffer. */
 
-void asm_write(buffer_t **asm_buffer)
+void asm_write(const char *asm_name, vec_t *asm_buffer)
 {
-  FILE *fp = fopen(asm_buffer[0]->name, "w");
-  fwrite(asm_buffer[0]->data, asm_buffer[0]->size, 1, fp);
+  FILE *fp = fopen(asm_name, "w");
+  fwrite(asm_buffer->data, asm_buffer->size, 1, fp);
   fclose(fp);
 }
 
-int asm_assemble(const char *srcname, const char *objname)
+int asm_assemble(const char *asm_name, const char *objname)
 {
 #ifdef DEBUG
   char *format_str = "yasm -f elf64 -g dwarf2 -o %s %s";
 #else
   char *format_str = "yasm -f elf64 -o %s %s";
 #endif
-  char command[snprintf(NULL, 0, format_str, objname, srcname) + 1];
-  sprintf(command, format_str, objname, srcname);
+  char command[snprintf(NULL, 0, format_str, objname, asm_name) + 1];
+  sprintf(command, format_str, objname, asm_name);
   return system(command);
 }
 
@@ -44,43 +44,12 @@ int asm_link(const char *objname, const char *outname)
   return system(command);
 }
 
-int asm_compile(buffer_t **asm_buffer, const char *objname, const char *outname)
+int asm_compile(vec_t *asm_buffer, const char *asm_name, const char *objname,
+                const char *outname)
 {
-  asm_write(asm_buffer);
-  asm_assemble(asm_buffer[0]->name, objname);
+  asm_write(asm_name, asm_buffer);
+  asm_assemble(asm_name, objname);
   return asm_link(objname, outname);
-}
-
-void asm_setup_buffer(buffer_t **asm_buffer, const char *outname)
-{
-  *asm_buffer         = buffer_init_str(outname, NULL, 1024);
-  asm_buffer[0]->size = 0;
-}
-
-// Write the initial boilerplate of the assembly file
-void asm_write_init(buffer_t **asm_buffer)
-{
-  const char format_string[] = "section .bss\n"
-                               "  memory resb %d\n"
-                               "section .text\n"
-                               "global _start\n"
-                               "_start:\n"
-                               "  mov r9, memory\n";
-  char initial_assembly[snprintf(NULL, 0, format_string, MEMORY_DEFAULT) + 1];
-  snprintf(initial_assembly, sizeof(initial_assembly), format_string,
-           MEMORY_DEFAULT);
-  buffer_append_bytes(asm_buffer, (u8 *)initial_assembly,
-                      sizeof(initial_assembly) - 1);
-}
-
-// Write the exit code for the assembly file
-void asm_write_exit(buffer_t **asm_buffer)
-{
-  buffer_append_bytes(asm_buffer,
-                      (u8 *)"  mov rax, 60\n"
-                            "  mov rdi, 0\n"
-                            "  syscall\n",
-                      37);
 }
 
 // A table which translates brainfuck operations into generic assembly code (I
@@ -116,7 +85,13 @@ i64 get_abs_label(u64, struct Label *, u64);
 // and next items in given pointers.
 void ast_ref_to_asm_label(u64, struct Label *, u64, i64 *, i64 *);
 
-void asm_translate_nodes(buffer_t **asm_buffer, struct PResult nodes,
+// Write the initial boilerplate of the assembly file
+void asm_write_init(vec_t *asm_buffer);
+
+// Write the exit code boilerplate for the assembly file
+void asm_write_exit(vec_t *asm_buffer);
+
+void asm_translate_nodes(vec_t *asm_buffer, struct PResult nodes,
                          const char *src_name)
 {
   asm_write_init(asm_buffer);
@@ -175,14 +150,12 @@ void asm_translate_nodes(buffer_t **asm_buffer, struct PResult nodes,
                             1];
       snprintf(formatted_string, sizeof(formatted_string), format_string,
                current_label, next_label);
-      buffer_append_bytes(asm_buffer, (u8 *)formatted_string,
-                          sizeof(formatted_string) - 1);
+      vec_append(asm_buffer, formatted_string, sizeof(formatted_string) - 1);
     }
     else
     {
       // I love tables so goddamn much
-      buffer_append_bytes(asm_buffer, (u8 *)table[node.type].str,
-                          table[node.type].len);
+      vec_append(asm_buffer, table[node.type].str, table[node.type].len);
     }
   }
   asm_write_exit(asm_buffer);
@@ -205,4 +178,29 @@ void ast_ref_to_asm_label(u64 ref, struct Label *labels, u64 size, i64 *cur,
   if (*cur == -1)
     return;
   *next = get_abs_label(labels[*cur].next, labels, size);
+}
+
+// Write the initial boilerplate of the assembly file
+void asm_write_init(vec_t *asm_buffer)
+{
+  const char format_string[] = "section .bss\n"
+                               "  memory resb %d\n"
+                               "section .text\n"
+                               "global _start\n"
+                               "_start:\n"
+                               "  mov r9, memory\n";
+  char initial_assembly[snprintf(NULL, 0, format_string, MEMORY_DEFAULT) + 1];
+  snprintf(initial_assembly, sizeof(initial_assembly), format_string,
+           MEMORY_DEFAULT);
+  vec_append(asm_buffer, initial_assembly, sizeof(initial_assembly) - 1);
+}
+
+// Write the exit code for the assembly file
+void asm_write_exit(vec_t *asm_buffer)
+{
+  vec_append(asm_buffer,
+             "  mov rax, 60\n"
+             "  mov rdi, 0\n"
+             "  syscall\n",
+             37);
 }
