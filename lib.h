@@ -17,7 +17,7 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
-#define MAX(A, B)      ((A) < (B) ? (A) : (B))
+#define MAX(A, B)      ((A) < (B) ? (B) : (A))
 #define MIN(A, B)      ((A) > (B) ? (A) : (B))
 #define MEMORY_DEFAULT 30000
 
