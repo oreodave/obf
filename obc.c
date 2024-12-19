@@ -59,6 +59,7 @@ int parse_config(struct Config *config, int argc, char *argv[])
   }
   if (!config->prog_name)
     return 0;
+
   return 1;
 }
 
@@ -70,8 +71,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  char *file_data  = NULL;
-  buffer_t *buffer = NULL, *asm_buffer = NULL;
+  char *file_data    = NULL;
+  buffer_t *buffer   = NULL;
+  vec_t asm_buffer   = {0};
   struct PResult res = {0};
 
   struct Config config = {0};
@@ -81,6 +83,12 @@ int main(int argc, char *argv[])
     usage(argv[0], stderr);
     goto end;
   }
+  if (!config.asm_name)
+    config.asm_name = "a.asm";
+  if (!config.obj_name)
+    config.obj_name = "a.o";
+  if (!config.exec_name)
+    config.exec_name = "a.out";
   ret = 0;
 
   FILE *handle = fopen(config.prog_name, "r");
@@ -102,15 +110,10 @@ int main(int argc, char *argv[])
     goto end;
   }
 
-  asm_setup_buffer(&asm_buffer, config.asm_name ? config.asm_name : "a.asm");
   asm_translate_nodes(&asm_buffer, res, config.prog_name);
-  asm_write(&asm_buffer);
-  asm_assemble(asm_buffer->name, config.obj_name ? config.obj_name : "a.o");
-  asm_link(config.obj_name ? config.obj_name : "a.o",
-           config.exec_name ? config.exec_name : "a.out");
+  asm_compile(&asm_buffer, config.asm_name, config.obj_name, config.exec_name);
 end:
-  if (asm_buffer)
-    free(asm_buffer);
+  vec_free(&asm_buffer);
   if (res.nodes)
     free(res.nodes);
   if (buffer)
