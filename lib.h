@@ -34,4 +34,16 @@ typedef struct Buffer
 } buffer_t;
 
 buffer_t *buffer_init_str(const char *name, const char *str, size_t str_size);
+
+typedef struct
+{
+  u64 size, capacity;
+  u8 *data;
+} vec_t;
+
+void vec_append(vec_t *vec, void *ptr, u64 size);
+void vec_ensure(vec_t *vec, u64 abs_size);
+void vec_ensure_free(vec_t *vec, u64 rel_size);
+void vec_free(vec_t *vec);
+
 #endif
