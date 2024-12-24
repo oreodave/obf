@@ -41,7 +41,7 @@ typedef struct
   u8 *data;
 } vec_t;
 
-void vec_append(vec_t *vec, void *ptr, u64 size);
+void vec_append(vec_t *vec, const void *const ptr, u64 size);
 void vec_ensure(vec_t *vec, u64 abs_size);
 void vec_ensure_free(vec_t *vec, u64 rel_size);
 void vec_free(vec_t *vec);
